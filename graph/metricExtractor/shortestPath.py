@@ -10,7 +10,7 @@ from graph.undirectedGraph import *
 from priorityQueue import NodePriorityQueue
 
 
-class shortestPath:
+class ShortestPath:
 
     def __init__(self, graph: UndirectedGraph) -> None:
         self.graph=graph
@@ -133,7 +133,7 @@ g=UndirectedGraph({},{},{})
 u=GraphUpdater(g, generatedDict)
 u.update()
 
-shortpath=shortestPath(g)
+shortpath=ShortestPath(g)
 
 edgeTo, distTo=shortpath.Astar('197','250',[['time']],[EuclideanForTube])
 
@@ -141,7 +141,7 @@ print(shortpath.kpi['nodesChecked'])
 
 print(shortpath.givePath()) 
 
-sp=shortestPath(g)
+sp=ShortestPath(g)
 
 astar=sp.Astar
 
