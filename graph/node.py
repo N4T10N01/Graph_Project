@@ -1,7 +1,4 @@
 
-from typing import Any
-
-
 class Node:
     def __init__(self, id: str, extraInfo={}, degree=0) -> None:
         self.id=id
@@ -11,7 +8,7 @@ class Node:
     def addInfo(self, infoType, value) -> None:
         self.extraInfo[infoType]=value
     
-    def getInfo(self, infoType) -> Any:
+    def getInfo(self, infoType) -> any:
         return self.extraInfo[infoType]
 
         

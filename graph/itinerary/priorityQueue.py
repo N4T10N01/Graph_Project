@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append('C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab')
+sys.path.append('..\\l1-graph-lab')
 
 
 from graph.node import Node
