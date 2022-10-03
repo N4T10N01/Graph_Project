@@ -9,14 +9,13 @@ from graph.edge import Edge
 class UndirectedGraph:
 
     def __init__(self,
-    nodeList: Dict, #typing stuff from lecture 3 here?
-    edgeList: Dict,
-    adjacencyList: Dict
+    nodeList: dict, #typing stuff from lecture 3 here?
+    edgeList: dict,
+    adjacencyList: dict
     ) -> None:
         self.nodeList=nodeList
         self.edgeList=edgeList
         self.adjacencyList=adjacencyList
-        self.adjancyMatrix=[]
 
     def addNode(self, n:Node) -> None: #O(1)
         self.nodeList[n.id]= n
@@ -55,5 +54,20 @@ class UndirectedGraph:
     def size(self):
         return len(self.nodeList.keys())
         
-    # def generateAdjacencyMatrix(self):
-    #     return 0
+
+class TubeMap(UndirectedGraph):
+    def __init__(self,
+    nodeList: dict, #typing stuff from lecture 3 here?
+    edgeList: dict,
+    lineList: dict,
+    adjacencyList: dict
+    ) -> None:
+        super().__init__(nodeList, edgeList, adjacencyList)
+        self.lineList=lineList
+
+    def addLine(self, line: list):
+        self.lineList[list[0]]=line[1:3]
+        
+    def delLine(self, lineNum: str):
+        self.lineList.pop(lineNum)
+        
