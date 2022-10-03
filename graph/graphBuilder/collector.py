@@ -1,5 +1,5 @@
 import sys
-sys.path.append('..\\l1-graph-lab')
+sys.path.append('C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab')
 
 
 from graph.graphBuilder.csvReader import *
@@ -64,4 +64,5 @@ def collectLines(data: dict, line="line"):
 
     return lines
 
-
+# answer2=collectEdges(readColumnFormat('C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.connections.csv'), 'station1', 'station1',weightTypes=['time'])
+# print(answer2)
