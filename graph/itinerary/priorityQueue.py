@@ -73,44 +73,6 @@ class NodePriorityQueue:
         
 
             
-# q=NodePriorityQueue(20)
-
-# q.insert(Node('a'), [20])
-# print(q.nodePlacements)
-# q.insert(Node('b'), [25])
-# print(q.nodePlacements)
-# q.insert(Node('c'), [22])
-# print(q.nodePlacements)
-# q.insert(Node('d'), [-3])
-# print(q.nodePlacements)
-# q.insert(Node('e'), [0])
-# print(q.nodePlacements)
-# q.insert(Node('f'), [17])
-# print(q.nodePlacements)
-# q.insert(Node('g'), [12])
-# print(q.nodePlacements)
-# q.insert(Node('h'), [-50])
-# print(q.nodePlacements)
-# q.insert(Node('i'), [15])
-# print(q.nodePlacements)
-# q.insert(Node('j'), [24])
-# print(q.nodePlacements)
-# q.insert(Node('k'), [100])
-# print(q.nodePlacements)
-# q.insert(Node('l'), [3])
-# print(q.nodePlacements)
-
-# print(q.pq)
-
-
-
-# q.delMin()
-
-# q.change(Node('d'), [500])
-
-# print(q.delMin())
-
-# print(q.contains(Node('e')))
 
 
 

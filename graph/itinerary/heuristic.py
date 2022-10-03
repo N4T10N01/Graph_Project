@@ -70,14 +70,7 @@ class StationCount(BaseHeuristic):
             
         
 
-# generatedDict={'nodePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.stations.csv', 'edgePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.connections.csv', 'nodeID': 'id', 'edgeNodeLabel1': 'station1', 'edgeNodeLabel2': 'station2', 'weightLabel': ['time'], 'uniqueValues': [], 'additionalPaths': {'line': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.lines.csv'}}
-# g=UndirectedGraph({},{},{})
-# u=GraphUpdater(g, generatedDict)
-# u.update()
 
-# h1=EuclideanForTube(g,'11','279')
-
-# print(h1.h(g.getNode('1')))
 
 
 

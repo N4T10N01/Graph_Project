@@ -162,16 +162,7 @@ class DijkstraComponentConnector(ComponentConnector):
                     self.edgeTo[nodeTo.id]=eObj
                     self.pq.change(nodeTo, self.distTo[nodeTo.id]) if (self.pq.contains(nodeTo)) else self.pq.insert(nodeTo, self.distTo[nodeTo.id])
 
-generatedDict={'nodePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.stations.csv', 'edgePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.connections.csv', 'nodeID': 'id', 'edgeNodeLabel1': 'station1', 'edgeNodeLabel2': 'station2', 'weightLabel': ['time'], 'uniqueValues': [], 'additionalPaths': {'line': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.lines.csv'}}
-g=UndirectedGraph({},{},{})
-u=GraphUpdater(g, generatedDict)
-u.update()
 
-obj=DijkstraComponentConnector(g, 'zone')
-
-obj.generatePath('3','9',[['time']])
-
-print(obj.givePath())
 
     
     

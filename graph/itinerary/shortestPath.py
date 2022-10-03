@@ -146,19 +146,4 @@ class Astar(ShortestPath):
 
 
 
-generatedDict={'nodePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.stations.csv', 'edgePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.connections.csv', 'nodeID': 'id', 'edgeNodeLabel1': 'station1', 'edgeNodeLabel2': 'station2', 'weightLabel': ['time'], 'uniqueValues': [], 'additionalPaths': {'line': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.lines.csv'}}
-        
-g=UndirectedGraph({},{},{})
-u=GraphUpdater(g, generatedDict)
-u.update()
-
-# sp=ShortestPath(g)
-
-# astar=sp.dijkstra
-
-# edgeTo, distTo=dij('197','250',[['time']],[EuclideanForTube])
-
-# print(sp.givePath())
-# edgeTo, distTo=astar('197','230',[['time']],[BaseHeuristic])
-# print(sp.givePath())
 

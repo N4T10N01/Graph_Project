@@ -56,21 +56,7 @@ class TubeMapUpdator(GraphUpdater):
         for line in lineList:
             self.graph.addLine(line)
 
-#can create separate graph Updator for tubeGraph which updates
-#lines as well as adds station weight of 1 ( enter {'station', 1})
-#which can be used specifically for dijkstra to assess shortest path 
-#like a bfs would or lexicographically add stations found to be a weight
-#assessed besides time. The results would vary from A-star with its heuristic
-#which biases it towards less stations but doesn't gaurantee the least possible
 
-# g=UndirectedGraph({},{},{})
-# u=GraphUpdater(g, generatedDict)
-# u.update()
-
-# for i,v in g.adjacencyList.items():
-#     print(i)
-#     for x,y in v.items():
-#         print(f'{y.id} {y.extraInfo}')
 
     
 
