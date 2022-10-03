@@ -1,11 +1,11 @@
 
 import sys
 
-sys.path.append('..\\l1-graph-lab')
+sys.path.append('C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab')
 
 from graph.graphBuilder.graphUpdater import GraphUpdater
 from graph.undirectedGraph import UndirectedGraph
-from graph.kpi import KPIParticipant
+from graph.kpiParticipant import KPIParticipant
 from graph.itinerary.itineraryObject import ItineraryObject
 from graph.undirectedGraph import *
 
@@ -28,10 +28,11 @@ class TSP(KPIParticipant, ItineraryObject):
 class BruteForceTSP(TSP):
 
     def generatePath(self, nodeList, weightGroups) -> None:
+        for key in self.kpis.keys():
+            self.kpis[key]=0
         self.path=None
         adjacencyMatrix=[[float('inf')]*len(nodeList) for i in range(len(nodeList))]
-        for i in adjacencyMatrix:
-            print(i)
+      
         indexOf={}
         for i in range(len(nodeList)):
             indexOf[nodeList[i]]=i
@@ -41,18 +42,13 @@ class BruteForceTSP(TSP):
             for edgeObj in self.graph.adjacencyList[nodeList[i]].values():
                 self.kpis['edgesChecked']+=1
                 currentNode=nodeList[i]
-                # print(currentNode)
-                # print(edgeObj.id)
-                # print(indexOf)
+
                 try:
                     pos=indexOf[edgeObj.other(currentNode)]
                     adjacencyMatrix[i][pos]=min(edgeObj.calculateWeight(weightGroups), adjacencyMatrix[i][pos]) #incase there are parallel edges
               
                 except:
-            
                     pass
-        for i in adjacencyMatrix:
-            print(i)
 
         possibilities=list(self._permutations(nodeList))
         self.kpis['combosChecked']=len(possibilities)
@@ -75,4 +71,18 @@ class BruteForceTSP(TSP):
                 for i in range(len(nodeList)):
                     yield combo[:i]+nodeList[0:1]+combo[i:]
 
+# generatedDict={'nodePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.stations.csv', 'edgePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.connections.csv', 'nodeID': 'id', 'edgeNodeLabel1': 'station1', 'edgeNodeLabel2': 'station2', 'weightLabel': ['time'], 'uniqueValues': [], 'additionalPaths': {'line': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.lines.csv'}}
+        
+# g=UndirectedGraph({},{},{})
+# u=GraphUpdater(g, generatedDict)
+# u.update()
 
+# obj=BruteForceTSP(g)
+
+# obj.generatePath(['136','84','148','279'],['time'])
+
+# print(obj.givePath())
+
+# obj.generatePath(['285','248','273','198', '272', '245', '191','136','84','148','279'],['time'])
+
+# print(obj.givePath())

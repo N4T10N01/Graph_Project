@@ -2,12 +2,12 @@
 import sys
 
 
-sys.path.append('..\\l1-graph-lab')
+sys.path.append('C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab')
 
 from graph.itinerary.priorityQueue import NodePriorityQueue
 from graph.graphBuilder.graphUpdater import GraphUpdater
 from graph.undirectedGraph import UndirectedGraph
-from graph.kpi import KPIParticipant
+from graph.kpiParticipant import KPIParticipant
 from graph.itinerary.itineraryObject import ItineraryObject
 from graph.undirectedGraph import *
 
@@ -30,7 +30,7 @@ class ComponentConnector(KPIParticipant, ItineraryObject):
         return super().generatePath()
 
     def giveKPIs(self) -> dict:
-        return self.kpis
+        return self.kpi
     
 class DijkstraComponentConnector(ComponentConnector):
 
@@ -38,6 +38,9 @@ class DijkstraComponentConnector(ComponentConnector):
         super().__init__(graph, componentID)
     
     def generatePath(self, node1, node2, weightGroups) -> None:
+        for key in self.kpi.keys():
+            self.kpi[key]=0
+
         copyGraph=UndirectedGraph(self.graph.nodeList, self.graph.edgeList, self.graph.adjacencyList)
         self.pq=NodePriorityQueue(len(copyGraph.nodeList))
         self.edgeTo={}
@@ -162,7 +165,15 @@ class DijkstraComponentConnector(ComponentConnector):
                     self.edgeTo[nodeTo.id]=eObj
                     self.pq.change(nodeTo, self.distTo[nodeTo.id]) if (self.pq.contains(nodeTo)) else self.pq.insert(nodeTo, self.distTo[nodeTo.id])
 
+# generatedDict={'nodePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.stations.csv', 'edgePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.connections.csv', 'nodeID': 'id', 'edgeNodeLabel1': 'station1', 'edgeNodeLabel2': 'station2', 'weightLabel': ['time'], 'uniqueValues': [], 'additionalPaths': {'line': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.lines.csv'}}
+# g=UndirectedGraph({},{},{})
+# u=GraphUpdater(g, generatedDict)
+# u.update()
 
+# obj=DijkstraComponentConnector(g, 'zone')
 
-    
+# obj.generatePath('3','9',[['time']])
+
+# print(obj.givePath())
+
     
