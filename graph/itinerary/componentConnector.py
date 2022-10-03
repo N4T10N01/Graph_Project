@@ -17,7 +17,7 @@ class ComponentConnector(KPIParticipant, ItineraryObject):
         self.graph=graph
         self.path=[]
         self.islands={}
-        self.kpis={'edgesChecked':0, 'nodesChecked':0}
+        self.kpi={'edgesChecked':0, 'nodesChecked':0}
         pass
 
     def giveIslands(self):
@@ -45,82 +45,72 @@ class DijkstraComponentConnector(ComponentConnector):
         nodesTo={}
         self.islands={}
 
-        print()
-        _, outerEdges1, island1=self._dfs(node1, self.graph.getNode(node1).getInfo(self.componentID), marked={}, outerEdges={}, innerNodes=[])
-
-        _, outerEdges2, island2=self._dfs(node2, self.graph.getNode(node2).getInfo(self.componentID),marked={}, outerEdges={}, innerNodes=[])
-
-        print(island1)
-        print("----------------------------------------------------------------------------------")
-        print(island2)
-
-        if node1 in island2:
-            print("same island, no external path necessary")
-            self.path=None
-            return
+        _, outerEdges1, island1=self._dfs(node1, self.graph.getNode(node1).getInfo(self.componentID), marked={}, outerEdges={}, innerNodes=[], graph=self.graph)
 
         island1node=Node('island1')
         island1node.addInfo(self.componentID, self.graph.getNode(node1).getInfo(self.componentID))
+        island1Edges=[]
 
-        island2node=Node('island2')
-        island1node.addInfo(self.componentID, self.graph.getNode(node2).getInfo(self.componentID))
-
-
-       
-
-        island1Edges=[print(e) for e in outerEdges1.values()]
-        island2Edges=[Edge(island2node.id, e[0], e[1].weights, e[1].extraInfo, e[1].uniqueValues) for e in outerEdges2.values().values()]
-
-        for n in island1:
-            copyGraph.delNode(n)
-        for n in island2:
-            copyGraph.delNode(n)
-
+        for ePairs in outerEdges1.values():
+            for ePair in ePairs.values():
+                island1Edges.append(Edge(island1node.id, ePair[0], ePair[1].weights, ePair[1].extraInfo, ePair[1].uniqueValues))
 
         copyGraph.addNode(island1node)
-        copyGraph.addNode(island2node)
 
         for e in island1Edges:
             copyGraph.addEdge(e)
+
+        _, outerEdges2, island2=self._dfs(node2, self.graph.getNode(node2).getInfo(self.componentID),marked={}, outerEdges={}, innerNodes=[], graph=self.graph)
+
+        island2node=Node('island2')
+        island2node.addInfo(self.componentID, self.graph.getNode(node2).getInfo(self.componentID))
+        island2Edges=[]
+
+        for ePairs in outerEdges2.values():
+            for ePair in ePairs.values():
+                island2Edges.append(Edge(island2node.id, ePair[0], ePair[1].weights, ePair[1].extraInfo, ePair[1].uniqueValues))
+
+        copyGraph.addNode(island2node)
+
         for e in island2Edges:
             copyGraph.addEdge(e)
             nodesTo[e.other(island2node.id)]=1
         #islands have been compressed into single nodes by this point
 
 
-        self._dijkstra(island1.id, nodesToID=nodesTo, weightTypes=weightGroups, graph=copyGraph)
+        self._dijkstra(island1node.id, nodesToID=nodesTo, weightTypes=weightGroups, graph=copyGraph)
 
         self.islands={node1: island1, node2: island2}
 
         for n in island2:
             givenPath=[]
-            id=node2
-            while (id!=node1):
+            id=n
+            while (id!='island1'):
                 givenPath.append(id)
                 id=self.edgeTo[id].other(id)
             givenPath.append(node1)
             self.path.append(givenPath)
 
-    def _dfs(self,  node: str, nodeComponentID: str, marked, outerEdges, innerNodes):
+    def _dfs(self,  node: str, nodeComponentID: str, marked, outerEdges, innerNodes, graph):
         # print(node)
-        # print(self.graph.getNode(node).getInfo('zone'))
+        # print(graph.getNode(node).getInfo('zone'))
         marked[node]=1
         outerEdges[node]={}
         innerNodes.append(node)
         toBeExplored=[]
 
-        self.kpis['nodesChecked']+=1
+        self.kpi['nodesChecked']+=1
 
-        for edge in self.graph.adjacencyList[node].values():
-            self.kpis['edgesChecked']+=1
-            if self.graph.getNode(edge.other(node)).getInfo(self.componentID)==nodeComponentID and marked.get(edge.other(node),-1)!=1:
+        for edge in graph.adjacencyList[node].values():
+            self.kpi['edgesChecked']+=1
+            if graph.getNode(edge.other(node)).getInfo(self.componentID)==nodeComponentID and marked.get(edge.other(node),-1)!=1:
                 toBeExplored.append(edge.other(node))
             else:
                 outerEdges[node][edge.id]=[edge.other(node), edge]
         
         for n in toBeExplored:
             if marked.get(n, -1)==-1:
-                marked, outerEdges, innerNodes=self._dfs(n, nodeComponentID, marked, outerEdges, innerNodes)
+                marked, outerEdges, innerNodes=self._dfs(n, nodeComponentID, marked, outerEdges, innerNodes, graph)
         
         return marked, outerEdges, innerNodes
 
@@ -181,9 +171,7 @@ obj=DijkstraComponentConnector(g, 'zone')
 
 obj.generatePath('3','9',[['time']])
 
-print(g.getNode('3').getInfo('zone'))
-print(g.getNode('9').getInfo('zone'))
-
 print(obj.givePath())
 
+    
     
