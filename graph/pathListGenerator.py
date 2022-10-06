@@ -30,9 +30,8 @@ def PathListGenerator():
     print("Enter title of csv and corresponding paths for additional features of the graph in the following format:")
     inp=input("title/path, title/path, ...\n")
 
-    if inp is not 's':
+    if inp != 's':
         for pair in [tuple.split('/') for tuple in inp.split(', ')]: 
-            print(pair) 
             dict['additionalPaths'][pair[0]]=pair[1]
     
     print("Dictionary has been generated, now returning")

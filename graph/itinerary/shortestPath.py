@@ -1,164 +1,197 @@
-
-import sys
-
-sys.path.append('C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab')
-
-from graph.graphBuilder.graphUpdater import GraphUpdater
-from graph.kpiParticipant import KPIParticipant
-from graph.itinerary.itineraryObject import ItineraryObject
-from graph.itinerary.heuristic import *
-from graph.undirectedGraph import *
-from graph.itinerary.priorityQueue import NodePriorityQueue
+try:
+    from graph.kpiParticipant import KPIParticipant
+    from graph.itinerary.itineraryObject import ItineraryObject
+    from graph.itinerary.heuristic import BaseHeuristic
+    from graph.undirectedGraph import UndirectedGraph
+    from graph.itinerary.priorityQueue import NodePriorityQueue
+    from graph.edge import Edge
+    from graph.node import Node
+except ModuleNotFoundError:
+    import sys
+    sys.path.append('..')
+    from graph.kpiParticipant import KPIParticipant
+    from graph.itinerary.itineraryObject import ItineraryObject
+    from graph.itinerary.heuristic import BaseHeuristic
+    from graph.undirectedGraph import UndirectedGraph
+    from graph.itinerary.priorityQueue import NodePriorityQueue
+    from graph.edge import Edge
+    from graph.node import Node
 
 
 class ShortestPath(ItineraryObject, KPIParticipant):
 
     def __init__(self, graph: UndirectedGraph) -> None:
-        self.pq=NodePriorityQueue(len(graph.nodeList))
-        self.edgeTo={}
-        self.distTo={}
-        self.nodeFromID=''
-        self.nodeToID=''
-        self.kpi={'nodesChecked': 0, 'edgesChecked':0}  
-        self.graph=graph
-        
-    def generatePath(self, nodeFromID:str, nodeToID:str, weightTypes:list[str])->list[dict, dict]:
+        self.pq = NodePriorityQueue(len(graph.nodeList))
+        self.edgeTo = {}
+        self.distTo = {}
+        self.nodeFromID = ''
+        self.nodeToID = ''
+        self.kpi = {'nodesChecked': 0, 'edgesChecked': 0}
+        self.graph = graph
+        self.nodeFound = False
+
+    def generatePath(self, nodeFromID: str, nodeToID: str,
+                     weightTypes: list[str]) -> list[dict, dict]:
         return None
 
-    def givePath(self) ->list[str]:
-        path=[]
-        id=self.nodeToID
-        while (id!=self.nodeFromID):
+    def givePath(self) -> list[str]:
+        if not self.nodeFound:
+            return None
+        path = []
+        id = self.nodeToID
+        while (id != self.nodeFromID):
             path.append(id)
-            id=self.edgeTo[id].other(id)
+            id = self.edgeTo.get(id, Edge(id, self.nodeFromID)).other(id)
         path.append(self.nodeFromID)
         return path
 
     def giveKPIs(self) -> dict:
         return self.kpi
 
+    def weightTotal(self):
+        if not self.nodeFound:
+            return None
+        return self.distTo[self.nodeToID]
+
+
 class Dijkstra(ShortestPath):
-    
+
     def __init__(self, graph: UndirectedGraph) -> None:
-        super().__init__(graph)  
+        super().__init__(graph)
 
- 
-    def generatePath(self, nodeFromID:str, nodeToID:str, weightTypes)->tuple:
+    def generatePath(self, nodeFromID: str, nodeToID: str,
+                     weightTypes) -> tuple:
+        self.pq.empty()
+        self.nodeFound = False
+        if (self.graph.getNode(nodeFromID).ID() == '' or
+           self.graph.getNode(nodeToID)) == '':
+            return None
         for key in self.kpi.keys():
-            self.kpi[key]=0
-        self.nodeFromID=nodeFromID
-        self.nodeToID=nodeToID
-        nodeFrom=self.graph.getNode(nodeFromID)
-        nodeTo=self.graph.getNode(nodeToID)
+            self.kpi[key] = 0
+        self.nodeFromID = nodeFromID
+        self.nodeToID = nodeToID
+        nodeFrom = self.graph.getNode(nodeFromID)
+        nodeTo = self.graph.getNode(nodeToID)
 
-        self.edgeTo={}
-        
-        for n in self.graph.nodeList.values(): #make method to return node list?
-            self.distTo[n.id]=[float('inf') for weightGroup in weightTypes]
+        self.edgeTo = {nodeFromID: Edge(nodeFromID, '')}
 
-        self.distTo[nodeFrom.id]=[0 for weightGroup in weightTypes]
+        for n in self.graph.allNodes():  # make method to return node list?
+            self.distTo[n.id] = [float('inf') for _ in weightTypes]
 
-        self.pq.insert(nodeFrom, self.distTo[nodeFrom.id])                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+        self.distTo[nodeFrom.id] = [0 for _ in weightTypes]
 
-        while(not(self.pq.isEmpty())):
-            nextNode=self.pq.delMin()
-            self.kpi['nodesChecked']+=1
+        self.pq.insert(nodeFrom, self.distTo[nodeFrom.id])
+
+        while (not (self.pq.isEmpty())):
+            nextNode = self.pq.delMin()
+            self.kpi['nodesChecked'] += 1
             if nextNode.id == nodeTo.id:
+                self.nodeFound = True
                 return self.edgeTo, self.distTo
             self.relax(self.graph, nextNode, weightTypes)
 
-        return None
-
-    def relax(self, graph: UndirectedGraph, n:Node, weightTypes:list[list[str]])->None:
-        
-        for eObj in graph.adjacencyList[n.id].values():
-            self.kpi['edgesChecked']+=1
-            nodeTo=self.graph.getNode(eObj.other(n.id))
-            weightList=[]
+    def relax(self, graph: UndirectedGraph, n: Node,
+              weightTypes: list[list[str]]) -> None:
+        for eObj in graph.giveAdjacencies(n.id):
+            self.kpi['edgesChecked'] += 1
+            nodeTo = self.graph.getNode(eObj.other(n.id))
+            weightList = []
 
             for weightGroup in weightTypes:
-                weightList.append(eObj.calculateWeight(weightGroup))
+                weightList.append(eObj.calculateWeight(weightGroup,
+                                                       [self.edgeTo[n.id],
+                                                        eObj]))
 
             for i in range(len(weightTypes)):
-                if (self.distTo[nodeTo.id][i]>self.distTo[n.id][i]+weightList[i]):
-                    self.distTo[nodeTo.id]=[i+j for i,j in zip(self.distTo[n.id], weightList)]
-                    self.edgeTo[nodeTo.id]=eObj
-                    self.pq.change(nodeTo, self.distTo[nodeTo.id]) if (self.pq.contains(nodeTo)) else self.pq.insert(nodeTo, self.distTo[nodeTo.id])
-    
+                if (self.distTo[nodeTo.id][0] >
+                        self.distTo[n.id][0] + weightList[0]):
+                    # print(f'node from {n.id} node to {nodeTo.id} from
+                    # {self.distTo[nodeTo.id][i]} to
+                    # {self.distTo[n.id][i]+weightList[i]}')
+                    self.distTo[nodeTo.id] = [i + j for i, j in
+                                              zip(self.distTo[n.id],
+                                                  weightList)]
+                    self.edgeTo[nodeTo.id] = eObj
+                    if self.pq.contains(nodeTo):
+                        self.pq.change(nodeTo, self.distTo[nodeTo.id])
+                    else:
+                        self.pq.insert(nodeTo, self.distTo[nodeTo.id])
+                elif (self.distTo[nodeTo.id][i] <
+                      self.distTo[n.id][i] + weightList[i]):
+                    break
+
 
 class Astar(ShortestPath):
     def __init__(self, graph: UndirectedGraph) -> None:
         super().__init__(graph)
-        
-        
-    def generatePath(self, nodeFromID:str, nodeToID:str, weightTypes:list[str], hList: BaseHeuristic)->list[Edge]:
-        for key in self.kpi.keys():
-            self.kpi[key]=0
-        self.nodeFromID=nodeFromID
-        self.nodeToID=nodeToID
-        nodeFrom=self.graph.getNode(nodeFromID)
-        nodeTo=self.graph.getNode(nodeToID)
 
-        self.edgeTo={}
+    def generatePath(self, nodeFromID: str, nodeToID: str,
+                     weightTypes: list[str],
+                     hList: BaseHeuristic) -> list[Edge]:
+        self.pq.empty()
+        self.nodeFound = False
+        if (self.graph.getNode(nodeFromID).ID() == '' or
+           self.graph.getNode(nodeToID)) == '':
+            return None
+        for key in self.kpi.keys():
+            self.kpi[key] = 0
+        self.nodeFromID = nodeFromID
+        self.nodeToID = nodeToID
+        nodeFrom = self.graph.getNode(nodeFromID)
+        nodeTo = self.graph.getNode(nodeToID)
+
+        self.edgeTo = {nodeFromID: Edge(nodeFromID, '')}
+
+        for n in self.graph.allNodes():  # make method to return node list?
+            self.distTo[n.id] = [float('inf') for _ in weightTypes]
+
+        self.distTo[nodeFrom.id] = [0 for _ in weightTypes]
 
         for i in range(len(hList)):
-            hList[i]=hList[i](self.graph, self.nodeFromID, self.nodeToID)
+            hList[i] = hList[i](self.graph, self.nodeFromID, self.nodeToID)
 
-        
-        for n in self.graph.nodeList.values(): #make method to return node list?
-            self.distTo[n.id]=[float('inf') for weightGroup in weightTypes]
+        self.pq.insert(nodeFrom, self.distTo[nodeFrom.id])
 
-        self.distTo[nodeFrom.id]=[0 for weightGroup in weightTypes]
-
-        self.pq.insert(nodeFrom, self.distTo[nodeFrom.id])                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
-
-        while(not(self.pq.isEmpty())):
-            nextNode=self.pq.delMin()
-            self.kpi['nodesChecked']+=1
+        while (not (self.pq.isEmpty())):
+            nextNode = self.pq.delMin()
+            self.kpi['nodesChecked'] += 1
             if nextNode.id == nodeTo.id:
+                self.nodeFound = True
                 return self.edgeTo, self.distTo
             self.relaxAStar(self.graph, nextNode, weightTypes, hList)
 
-        return None
-
-    def relaxAStar(self, graph: UndirectedGraph, n:Node, weightTypes:list[list[str]], hList: BaseHeuristic)->None:
-        
-        for eObj in graph.adjacencyList[n.id].values():
-            self.kpi['edgesChecked']+=1
-            nodeTo=self.graph.getNode(eObj.other(n.id))
-            weightList=[]
+    def relaxAStar(self, graph: UndirectedGraph, n: Node,
+                   weightTypes: list[list[str]],
+                   hList: list[BaseHeuristic]) -> None:
+        for eObj in graph.giveAdjacencies(n.id):
+            self.kpi['edgesChecked'] += 1
+            nodeTo = self.graph.getNode(eObj.other(n.id))
+            weightList = []
 
             for weightGroup in weightTypes:
-                weightList.append(eObj.calculateWeight(weightGroup))
+                weightList.append(eObj.calculateWeight(weightGroup,
+                                                       [self.edgeTo[n.id],
+                                                        eObj]))
 
             for i in range(len(weightTypes)):
-                if (self.distTo[nodeTo.id][i]>self.distTo[n.id][i]+weightList[i]):
-                    self.distTo[nodeTo.id]=[i+j for i,j in zip(self.distTo[n.id], weightList)]
-                    self.edgeTo[nodeTo.id]=eObj
+                if (self.distTo[nodeTo.id][0] >
+                        self.distTo[n.id][0] + weightList[0]):
+                    # print(f'node from {n.id} node to {nodeTo.id} from
+                    # {self.distTo[nodeTo.id][i]} to
+                    # {self.distTo[n.id][i]+weightList[i]}')
+                    self.distTo[nodeTo.id] = [i + j for i, j in
+                                              zip(self.distTo[n.id],
+                                                  weightList)]
+                    self.edgeTo[nodeTo.id] = eObj
 
-                    g=self.distTo[nodeTo.id]
-                    h=[obj.h(nodeTo) for obj in hList]
-                    f=[i+j for i,j in zip(g,h)]
+                    g = self.distTo[nodeTo.id]
+                    h = [obj.h(nodeTo) for obj in hList]
+                    f = [i + j for i, j in zip(g, h)]
 
-                    self.pq.change(nodeTo, f) if (self.pq.contains(nodeTo)) else self.pq.insert(nodeTo, f)
-    
-            
-
-
-
-generatedDict={'nodePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.stations.csv', 'edgePath': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.connections.csv', 'nodeID': 'id', 'edgeNodeLabel1': 'station1', 'edgeNodeLabel2': 'station2', 'weightLabel': ['time'], 'uniqueValues': [], 'additionalPaths': {'line': 'C:\\Users\\Dingleberry\\Documents\\3XB3\\l1-graph-lab\\_dataset\\london.lines.csv'}}
-        
-g=UndirectedGraph({},{},{})
-u=GraphUpdater(g, generatedDict)
-u.update()
-
-# sp=ShortestPath(g)
-
-# astar=sp.dijkstra
-
-# edgeTo, distTo=dij('197','250',[['time']],[EuclideanForTube])
-
-# print(sp.givePath())
-# edgeTo, distTo=astar('197','230',[['time']],[BaseHeuristic])
-# print(sp.givePath())
-
+                    if self.pq.contains(nodeTo):
+                        self.pq.change(nodeTo, f)
+                    else:
+                        self.pq.insert(nodeTo, f)
+                elif (self.distTo[nodeTo.id][i] <
+                      self.distTo[n.id][i] + weightList[i]):
+                    break
