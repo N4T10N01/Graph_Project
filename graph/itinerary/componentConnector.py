@@ -60,6 +60,7 @@ class DiComponentConnector(ComponentConnector):
         self.edgeTo = {}
         self.distTo = {}
         self.islands = {}
+        self.path=[]
 
         innerEdges1, island1, outerEdges1 = self._bfs(node1)
         innerEdges2, island2, outerEdges2 = self._bfs(node2)
@@ -106,7 +107,12 @@ class DiComponentConnector(ComponentConnector):
             else:
                 nodeTo=e.node1
 
-            edge=Edge('island2', nodeTo, e.weights,
+            weights={}
+
+            for type in e.weights.keys():
+                weights[type] = lambda *args: float('inf')
+
+            edge=Edge('island2', nodeTo, weights,
                     e.extraInfo, e.uniqueValues)
             island2Edges.append(edge)
             copyGraph.addEdge(edge)
@@ -122,18 +128,16 @@ class DiComponentConnector(ComponentConnector):
 
         self.islands = {node1: island1, node2: island2}
 
-        for e in island2Edges:
+        for n in island2:
+
+            id = n
             givenPath = []
-            id = e.other('island2')
 
             if self.edgeTo.get(id, '') == '':
                 continue
 
             while (id != 'island1'):
                 givenPath.append(id)
-
-                if id == 'island2':
-                    givenPath.append("redundant")
 
                 id = self.edgeTo[id].other(id)
             givenPath.append('island1')
