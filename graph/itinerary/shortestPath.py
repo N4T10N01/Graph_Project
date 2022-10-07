@@ -64,7 +64,7 @@ class Dijkstra(ShortestPath):
         self.pq.empty()
         self.nodeFound = False
         if (self.graph.getNode(nodeFromID).ID() == '' or
-           self.graph.getNode(nodeToID)) == '':
+           self.graph.getNode(nodeToID).ID() == ''):
             return None
         for key in self.kpi.keys():
             self.kpi[key] = 0
@@ -131,7 +131,7 @@ class Astar(ShortestPath):
         self.pq.empty()
         self.nodeFound = False
         if (self.graph.getNode(nodeFromID).ID() == '' or
-           self.graph.getNode(nodeToID)) == '':
+           self.graph.getNode(nodeToID).ID() == ''):
             return None
         for key in self.kpi.keys():
             self.kpi[key] = 0

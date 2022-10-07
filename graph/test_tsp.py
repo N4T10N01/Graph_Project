@@ -1,31 +1,30 @@
 try:
     import pytest
-    from graph.graphBuilder.graphUpdater import GraphUpdater
+    from graph.graphBuilder.graphUpdater import TubeMapUpdater
     from graph.itinerary.tsp import BruteForceTSP
-    from graph.undirectedGraph import UndirectedGraph
+    from graph.undirectedGraph import TubeMap
 except ModuleNotFoundError:
     import sys
     sys.path.append('..\\l1-graph-lab')
-    from graph.graphBuilder.graphUpdater import GraphUpdater
+    from graph.graphBuilder.graphUpdater import TubeMap
     from graph.itinerary.tsp import BruteForceTSP
-    from graph.undirectedGraph import UndirectedGraph
-
-
-generatedDict = {'nodePath': '..\\_dataset\\london.stations.csv',
-                 'edgePath': '..\\_dataset\\london.connections.csv',
-                 'nodeID': 'id', 'edgeNodeLabel1': 'station1',
-                 'edgeNodeLabel2': 'station2', 'weightLabel': ['time'],
-                 'uniqueValues': [],
-                 'additionalPaths':
-                 {'line': '..\\_dataset\\london.lines.csv'}}
-
-g = UndirectedGraph({}, {}, {})
-u = GraphUpdater(g, generatedDict)
-u.update()
+    from graph.undirectedGraph import TubeMap
 
 
 @pytest.fixture
-def getAlgorithm(g):
+def getAlgorithm():
+    generatedDict = {'nodePath': '_dataset\\london.stations.csv',
+                 'edgePath': '_dataset\\london.connections.csv',
+                 'nodeID': 'id',
+                 'edgeNodeLabel1': 'station1',
+                 'edgeNodeLabel2': 'station2',
+                 'weightLabel': ['time'],
+                 'uniqueValues': ['line'],
+                 'additionalPaths':
+                 {'line': '_dataset\\london.lines.csv'}}
+    g = TubeMap({}, {}, {}, {})
+    u = TubeMapUpdater(g, generatedDict)
+    u.update()
     return BruteForceTSP(g)
 
 
@@ -50,25 +49,64 @@ def same_node() -> list:
 
 
 @pytest.fixture
-def two_nodes() -> list:
+def two_nodes_c() -> list:
     return [['285', '248'], ['time']]
 
 
 @pytest.fixture
-def many_nodes() -> list:
-    return [['285', '248', '273', '198', '272'], ['time']]
+def two_nodes_dc() -> list:
+    return [['50', '199'], ['time']]
 
 
 @pytest.fixture
-def all_cases(no_end_or_origin, no_end, no_origin,
-              same_node, two_node, many_node):
-    return [no_end_or_origin, no_end, no_origin,
-            same_node, two_node, many_node]
+def many_nodes_3v1() -> list:
+    return [['285', '87', '279'], ['time']]
 
 
 @pytest.fixture
-def test_all_cases(all_cases):
-    testObj = getAlgorithm(g)
-    for case in all_cases:
+def many_nodes_3v2() -> list:
+    return [['116', '118', '117'], ['time']]
+
+
+@pytest.fixture
+def no_path(no_end_or_origin, no_end, no_origin, two_nodes_dc):
+    return [no_end_or_origin, no_end, no_origin, two_nodes_dc]
+
+
+@pytest.fixture
+def singleton(same_node):
+    return [same_node]
+
+
+@pytest.fixture
+def two_path(two_nodes_c):
+    return [two_nodes_c]
+
+
+@pytest.fixture
+def many_path(many_nodes_3v1, many_nodes_3v2):
+    return [many_nodes_3v1, many_nodes_3v2]
+
+
+def test_all_cases(no_path,
+                singleton,
+                two_path,
+                many_path,
+                getAlgorithm):
+
+    testObj = getAlgorithm
+    for case in no_path:
         testObj.generatePath(*case)
-        assert testObj.generatePath != []
+        assert testObj.givePath() == None
+    
+    for case in singleton:
+        testObj.generatePath(*case)
+        assert len(testObj.givePath()) == 1
+
+    for case in two_path:
+        testObj.generatePath(*case)
+        assert len(testObj.givePath()) == 2
+
+    for case in many_path:
+        testObj.generatePath(*case)
+        assert len(testObj.givePath()) == 3

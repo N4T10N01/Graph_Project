@@ -22,146 +22,169 @@ class ComponentConnector(KPIParticipant, ItineraryObject):
         self.graph = graph
         self.path = []
         self.islands = {}
-        self.kpi = {'edgesChecked': 0, 'nodesChecked': 0}
+        self.kpis = {'edgesChecked': 0, 'nodesChecked': 0}
         pass
 
     def giveIslands(self):
         return self.islands
 
     def givePath(self) -> list:
+        if self.path == []:
+            return None
         return self.path
 
     def generatePath(self, node1, node2, weightGroups) -> None:
         return super().generatePath()
 
     def giveKPIs(self) -> dict:
-        return self.kpi
+        return self.kpis
 
 
-class DijkstraComponentConnector(ComponentConnector):
+class DiComponentConnector(ComponentConnector):
 
     def __init__(self, graph: UndirectedGraph, componentID: str) -> None:
         super().__init__(graph, componentID)
 
     def generatePath(self, node1, node2, weightGroups) -> None:
-        for key in self.kpi.keys():
-            self.kpi[key] = 0
+        if (self.graph.getNode(node1).ID() == '' or
+           self.graph.getNode(node2).ID() == ''):
+            return None
 
+        for key in self.kpis.keys():
+            self.kpis[key] = 0
+        
         copyGraph = UndirectedGraph(
             self.graph.nodeList, self.graph.edgeList,
             self.graph.adjacencyList)
         self.pq = NodePriorityQueue(len(copyGraph.nodeList))
         self.edgeTo = {}
         self.distTo = {}
-        nodesTo = {}
         self.islands = {}
 
-        _, outerEdges1, island1 = self._dfs(node1,
-                                            self.graph.getNode(node1).getInfo(
-                                                self.componentID),
-                                            marked={}, outerEdges={},
-                                            innerNodes=[],
-                                            graph=self.graph)
-
-        island1node = Node('island1')
-        island1node.addInfo(self.componentID, self.graph.getNode(
-            node1).getInfo(self.componentID))
-        island1Edges = []
-
-        for ePairs in outerEdges1.values():
-            for ePair in ePairs.values():
-                island1Edges.append(Edge(
-                    island1node.id, ePair[0], ePair[1].weights,
-                    ePair[1].extraInfo, ePair[1].uniqueValues))
-
-        copyGraph.addNode(island1node)
-
-        for e in island1Edges:
-            copyGraph.addEdge(e)
-
-        _, outerEdges2, island2 = self._dfs(node2,
-                                            self.graph.getNode(node2).getInfo(
-                                                self.componentID),
-                                            marked={},
-                                            outerEdges={},
-                                            innerNodes=[], graph=self.graph)
+        innerEdges1, island1, outerEdges1 = self._bfs(node1)
+        innerEdges2, island2, outerEdges2 = self._bfs(node2)
 
         for n in island1:
             if n in island2:
                 return None
 
+        island1ID = self.graph.getNode(node1).getInfo(self.componentID)
+        island2ID = self.graph.getNode(node2).getInfo(self.componentID)
+
+        island1node = Node('island1')
         island2node = Node('island2')
-        island2node.addInfo(self.componentID, self.graph.getNode(
-            node2).getInfo(self.componentID))
-        island2Edges = []
 
-        for ePairs in outerEdges2.values():
-            for ePair in ePairs.values():
-                island2Edges.append(Edge(
-                    island2node.id, ePair[0], ePair[1].weights,
-                    ePair[1].extraInfo, ePair[1].uniqueValues))
+        island1node.addInfo(self.componentID, island1ID)
+        island2node.addInfo(self.componentID, island2ID)
 
+        copyGraph.addNode(island1node)
         copyGraph.addNode(island2node)
 
-        for e in island2Edges:
-            copyGraph.addEdge(e)
-            nodesTo[e.other(island2node.id)] = 1
-        # islands have been compressed into single nodes by this point
+        island1Edges = []
+        island2Edges = []
 
-        self._dijkstra(island1node.id, nodesToID=nodesTo,
-                       weightTypes=weightGroups, graph=copyGraph)
+        for e in outerEdges1.values():
+
+            if (self.graph.getNode(e.node1).getInfo(self.componentID)
+            == island1ID): 
+                nodeTo = e.node2
+
+            else:
+                nodeTo=e.node1
+
+            edge=Edge('island1', nodeTo, e.weights,
+                    e.extraInfo, e.uniqueValues)
+            island1Edges.append(edge)
+            copyGraph.addEdge(edge)
+
+        for e in outerEdges2.values():
+
+            if (self.graph.getNode(e.node2).getInfo(self.componentID)
+            == island2ID): 
+                nodeTo = e.node2
+
+            else:
+                nodeTo=e.node1
+
+            edge=Edge('island2', nodeTo, e.weights,
+                    e.extraInfo, e.uniqueValues)
+            island2Edges.append(edge)
+            copyGraph.addEdge(edge)
+
+        innerEdges1 |= innerEdges2
+
+        for e in innerEdges1.values():
+            self.graph.delEdge(e.id)
+
+        self._dijkstra('island1',
+                        weightTypes=weightGroups,
+                        graph=copyGraph)
 
         self.islands = {node1: island1, node2: island2}
 
-        for n in island2:
+        for e in island2Edges:
             givenPath = []
-            id = n
+            id = e.other('island2')
+
+            if self.edgeTo.get(id, '') == '':
+                continue
+
             while (id != 'island1'):
                 givenPath.append(id)
+
+                if id == 'island2':
+                    givenPath.append("redundant")
+
                 id = self.edgeTo[id].other(id)
-            givenPath.append(node1)
+            givenPath.append('island1')
             self.path.append(givenPath)
 
-    def _dfs(self,  node: str, nodeComponentID: str,
-             marked, outerEdges, innerNodes, graph):
-        # print(node)
-        # print(graph.getNode(node).getInfo('zone'))
-        marked[node] = 1
-        outerEdges[node] = {}
-        innerNodes.append(node)
-        toBeExplored = []
+    def _bfs(self, origin: str):
+        marked = {}
+        outer = {}
+        innerNodes = []
+        innerEdges = {}
+        cID = self.graph.getNode(origin).getInfo(self.componentID)
 
-        self.kpi['nodesChecked'] += 1
+        queue = [None]*self.graph.size()
+        lastIn = 0
+        firstOut = 0
 
-        for edge in graph.adjacencyList[node].values():
-            self.kpi['edgesChecked'] += 1
-            if (graph.getNode(edge.other(node)).getInfo(self.componentID) ==
-                    nodeComponentID and marked.get(edge.other(node), -1)) != 1:
-                toBeExplored.append(edge.other(node))
-            else:
-                outerEdges[node][edge.id] = [edge.other(node), edge]
+        queue[lastIn] = origin
+        lastIn += 1
 
-        for n in toBeExplored:
-            if marked.get(n, -1) == -1:
-                marked, outerEdges, innerNodes = self._dfs(
-                    n, nodeComponentID, marked, outerEdges,
-                    innerNodes, graph)
+        while (queue[firstOut] != None and firstOut != len(queue)):
+            self.kpis['nodesChecked'] += 1
+            n = queue[firstOut]
+            innerNodes.append(n)
+            firstOut += 1
+            marked[n] = True
 
-        return marked, outerEdges, innerNodes
+            for edge in self.graph.adjacencyList[n].values():
+                self.kpis['edgesChecked'] += 1
+                other = edge.other(n)
 
-    def _dijkstra(self, nodeFromID: str, nodesToID: dict,
-                  weightTypes, graph) -> tuple:
+                if (not (marked.get(other, False))
+                    and self.graph.getNode(other).getInfo(self.componentID) == cID):
+                    innerEdges[edge.id] = edge
+                    marked[other] = True
+                    queue[lastIn] = edge.other(n)
+                    lastIn += 1
+                
+                elif (self.graph.getNode(other).getInfo(self.componentID) != cID):
+                    outer[edge.id] = edge
+
+        return innerEdges, innerNodes, outer
+        
+    def _dijkstra(self, nodeFromID: str, weightTypes: list, 
+                    graph: UndirectedGraph) -> tuple:
+        self.pq.empty()
         self.nodeFromID = nodeFromID
-        # self.nodeToID=nodeToID
-        nodeFrom = self.graph.getNode(nodeFromID)
-        # nodeTo=self.graph.getNode(nodeToID)
+        nodeFrom = graph.getNode(nodeFromID)
 
-        self.edgeTo = {}
-        self.nodesChecked = 0
-        self.edgesChecked = 0
+        self.edgeTo = {nodeFromID: Edge(nodeFromID, '')}
 
-        # make method to return node list?
-        for n in self.graph.nodeList.values():
+        for n in self.graph.allNodes():  # make method to return node list?
             self.distTo[n.id] = [float('inf') for _ in weightTypes]
 
         self.distTo[nodeFrom.id] = [0 for _ in weightTypes]
@@ -170,35 +193,33 @@ class DijkstraComponentConnector(ComponentConnector):
 
         while (not (self.pq.isEmpty())):
             nextNode = self.pq.delMin()
-            self.kpi['nodesChecked'] += 1
-            if nodesToID.get(nextNode.id, -1) == 1:
-                nodesToID.pop(nextNode.id)
+            self.kpis['nodesChecked'] += 1
+            self.relax(graph, nextNode, weightTypes)
 
-            if (len(nodesToID) == 0):
-                return self.edgeTo, self.distTo
-            self._relax(graph, nextNode, weightTypes)
-
-        return None
-
-    def _relax(self, graph: UndirectedGraph, n: Node,
-               weightTypes: list[list[str]]) -> None:
-
-        for eObj in graph.adjacencyList[n.id].values():
-            self.kpi['edgesChecked'] += 1
-            nodeTo = self.graph.getNode(eObj.other(n.id))
+    def relax(self, graph: UndirectedGraph, n: Node,
+              weightTypes: list[list[str]]) -> None:
+        for eObj in graph.giveAdjacencies(n.id):
+            self.kpis['edgesChecked'] += 1
+            nodeTo = graph.getNode(eObj.other(n.id))
             weightList = []
 
             for weightGroup in weightTypes:
-                weightList.append(eObj.calculateWeight(weightGroup))
+                weightList.append(eObj.calculateWeight(weightGroup,
+                                                       [self.edgeTo[n.id],
+                                                        eObj]))
 
             for i in range(len(weightTypes)):
-                if (self.distTo[nodeTo.id][i] >
-                        self.distTo[n.id][i]+weightList[i]):
-                    self.distTo[nodeTo.id] = [i+j for i,
-                                              j in zip(self.distTo[n.id],
-                                                       weightList)]
+                if (self.distTo[nodeTo.id][0] >
+                        self.distTo[n.id][0] + weightList[0]):
+
+                    self.distTo[nodeTo.id] = [i + j for i, j in
+                                              zip(self.distTo[n.id],
+                                                  weightList)]
                     self.edgeTo[nodeTo.id] = eObj
                     if self.pq.contains(nodeTo):
                         self.pq.change(nodeTo, self.distTo[nodeTo.id])
                     else:
                         self.pq.insert(nodeTo, self.distTo[nodeTo.id])
+                elif (self.distTo[nodeTo.id][i] <
+                      self.distTo[n.id][i] + weightList[i]):
+                    break

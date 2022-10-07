@@ -1,32 +1,31 @@
 try:
     import pytest
-    from graph.graphBuilder.graphUpdater import GraphUpdater
-    from graph.itinerary.componentConnector import DijkstraComponentConnector
-    from graph.undirectedGraph import UndirectedGraph
+    from graph.graphBuilder.graphUpdater import TubeMapUpdater
+    from graph.itinerary.componentConnector import DiComponentConnector
+    from graph.undirectedGraph import TubeMap
 except ModuleNotFoundError:
     import sys
     sys.path.append('..\\l1-graph-lab')
-    from graph.graphBuilder.graphUpdater import GraphUpdater
-    from graph.itinerary.componentConnector import DijkstraComponentConnector
-    from graph.undirectedGraph import UndirectedGraph
-
-
-generatedDict = {'nodePath': '..\\_dataset\\london.stations.csv',
-                 'edgePath': '..\\_dataset\\london.connections.csv',
-                 'nodeID': 'id', 'edgeNodeLabel1': 'station1',
-                 'edgeNodeLabel2': 'station2',
-                 'weightLabel': ['time'], 'uniqueValues': [],
-                 'additionalPaths':
-                 {'line': '..\\_dataset\\london.lines.csv'}}
-
-g = UndirectedGraph({}, {}, {})
-u = GraphUpdater(g, generatedDict)
-u.update()
+    from graph.graphBuilder.graphUpdater import TubeMapUpdater
+    from graph.itinerary.componentConnector import DiComponentConnector
+    from graph.undirectedGraph import TubeMap
 
 
 @pytest.fixture
-def getAlgorithm(g, componentID):
-    return DijkstraComponentConnector(g, componentID)
+def getAlgorithm():
+    generatedDict = {'nodePath': '_dataset\\london.stations.csv',
+                 'edgePath': '_dataset\\london.connections.csv',
+                 'nodeID': 'id', 'edgeNodeLabel1': 'station1',
+                 'edgeNodeLabel2': 'station2',
+                 'weightLabel': ['time'], 
+                 'uniqueValues': ['line'],
+                 'additionalPaths':
+                 {'line': '_dataset\\london.lines.csv'}}
+
+    g = TubeMap({}, {}, {}, {})
+    u = TubeMapUpdater(g, generatedDict)
+    u.update()
+    return DiComponentConnector(g, 'zone')
 
 
 @pytest.fixture
@@ -50,25 +49,51 @@ def same_node() -> list:
 
 
 @pytest.fixture
-def two_nodes() -> list:
-    return ['285', '248', [['time']]]
+def two_nodes_diffcomp() -> list:
+    return ['84', '136', [['time']]]
+
+
+@pytest.fixture
+def two_nodes_samecomp() -> list:
+    return ['140', '237', [['time']]]
 
 
 @pytest.fixture
 def many_nodes() -> list:
-    return ['199', '15', [['time']]]
+    return ['117', '121', [['time']]]
 
 
 @pytest.fixture
-def all_cases(no_end_or_origin, no_end, no_origin,
-              same_node, two_node, many_node):
-    return [no_end_or_origin, no_end, no_origin,
-            same_node, two_node, many_node]
+def no_path(no_end_or_origin, no_end, no_origin, same_node,
+            two_nodes_samecomp):
+    return [no_end_or_origin, no_end, no_origin, same_node,
+            two_nodes_samecomp]
 
 
 @pytest.fixture
-def test_all_cases(all_cases):
-    testObj = getAlgorithm(g, 'zone')
-    for case in all_cases:
+def two_path(two_nodes_diffcomp):
+    return [two_nodes_diffcomp]
+
+
+@pytest.fixture
+def many_path(many_nodes):
+    return [many_nodes]
+
+
+def test_all_cases(no_path,
+                two_path,
+                many_path,
+                getAlgorithm):
+
+    testObj = getAlgorithm
+    for case in no_path:
         testObj.generatePath(*case)
-        assert testObj.generatePath != []
+        assert testObj.givePath() == None
+
+    for case in two_path:
+        testObj.generatePath(*case)
+        assert [case[1], 'island1'] in testObj.givePath()
+
+    for case in many_path:
+        testObj.generatePath(*case)
+        assert min([len(path) for path in testObj.givePath()]) >= 2

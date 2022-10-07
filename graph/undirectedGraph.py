@@ -33,7 +33,7 @@ class UndirectedGraph:
         return self.nodeList.get(id, Node(''))
 
     def giveAdjacencies(self, id: str):
-        return self.adjacencyList.get(id, []).values()
+        return self.adjacencyList.get(id, {}).values()
 
     def addEdge(self, e: Edge) -> None:
         # O(E) worst case if bad hashing occurs for contains used
@@ -61,15 +61,16 @@ class UndirectedGraph:
             self.adjacencyList[self.edgeList[edgeID].other(n)].pop(edgeID)
             self.edgeList.pop(edgeID)
 
+        self.adjacencyList.pop(n)
         self.nodeList.pop(n)
 
-    def delEdge(self, e: str) -> None:  # O(1) as only 1 edge goes
-        edgeObj = self.edgeList[e]
-        self.adjacencyList[edgeObj.node1].pop(edgeObj.id)
-        edgeObj.node1.degree -= 1
-        self.adjacencyList[edgeObj.node2].pop(edgeObj.id)
-        edgeObj.node2.degree -= 1
-        self.edgeList.pop(e)
+    def delEdge(self, eID: str) -> None:  # O(1) as only 1 edge goes
+        edgeObj = self.edgeList[eID]
+        self.adjacencyList[edgeObj.node1].pop(eID)
+        self.nodeList[edgeObj.node1].addToDegree(-1)
+        self.adjacencyList[edgeObj.node2].pop(eID)
+        self.nodeList[edgeObj.node2].addToDegree(-1)
+        self.edgeList.pop(eID)
 
     def size(self):
         return len(self.nodeList.keys())

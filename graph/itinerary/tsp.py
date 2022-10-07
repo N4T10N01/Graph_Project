@@ -30,6 +30,7 @@ class TSP(KPIParticipant, ItineraryObject):
 class BruteForceTSP(TSP):
 
     def generatePath(self, nodeList, weightGroups) -> None:
+        nodeList=list(set(nodeList))
         for key in self.kpis.keys():
             self.kpis[key] = 0
         self.path = None
@@ -38,9 +39,13 @@ class BruteForceTSP(TSP):
 
         indexOf = {}
         for i in range(len(nodeList)):
+            if self.graph.getNode(nodeList[i]).ID() == '':
+                return None
             indexOf[nodeList[i]] = i
 
         for i in range(len(nodeList)):
+            
+            adjacencyMatrix[i][i] = 1
             self.kpis['nodesChecked'] += 1
             for edgeObj in self.graph.adjacencyList[nodeList[i]].values():
                 self.kpis['edgesChecked'] += 1
@@ -70,7 +75,6 @@ class BruteForceTSP(TSP):
                 self.path = nodeCombo
 
     def _permutations(self, nodeList):
-        self.kpis['combosChecked'] += 1
         if len(nodeList) <= 1:
             yield nodeList
         else:

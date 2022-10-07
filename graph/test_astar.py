@@ -1,3 +1,6 @@
+from graph.itinerary.heuristic import EuclideanForTube
+
+
 try:
     from graph.itinerary.shortestPath import Astar
     from graph.itinerary.shortestPath import BaseHeuristic
@@ -13,22 +16,21 @@ except ModuleNotFoundError:
     from graph.undirectedGraph import TubeMap
     import pytest
 
-generatedDict = {'nodePath': '..\\_dataset\\london.stations.csv',
-                 'edgePath': '..\\_dataset\\london.connections.csv',
+
+@pytest.fixture
+def getAlgorithm():
+    generatedDict = {'nodePath': '_dataset\\london.stations.csv',
+                 'edgePath': '_dataset\\london.connections.csv',
                  'nodeID': 'id',
                  'edgeNodeLabel1': 'station1',
                  'edgeNodeLabel2': 'station2',
                  'weightLabel': ['time'],
                  'uniqueValues': ['line'],
                  'additionalPaths':
-                 {'line': '..\\_dataset\\london.lines.csv'}}
-g = TubeMap({}, {}, {}, {})
-u = TubeMapUpdater(g, generatedDict)
-u.update()
-
-
-@pytest.fixture
-def getAlgorithm(g):
+                 {'line': '_dataset\\london.lines.csv'}}
+    g = TubeMap({}, {}, {}, {})
+    u = TubeMapUpdater(g, generatedDict)
+    u.update()
     return Astar(g)
 
 
@@ -53,25 +55,64 @@ def same_node() -> list:
 
 
 @pytest.fixture
-def two_nodes() -> list:
+def two_nodes1() -> list:
     return ['46', '53', [['time']], [BaseHeuristic]]
 
 
 @pytest.fixture
-def many_nodes() -> list:
+def two_nodes2() -> list:
+    return ['53', '214', [['time']], [BaseHeuristic]]
+
+
+@pytest.fixture
+def many_nodes1() -> list:
     return ['169', '50', [['time']], [BaseHeuristic]]
 
 
 @pytest.fixture
-def all_cases(no_end_or_origin, no_end, no_origin,
-              same_node, two_node, many_node):
-    return [no_end_or_origin, no_end, no_origin,
-            same_node, two_node, many_node]
+def many_nodes2() -> list:
+    return ['16', '88', [['time']], [BaseHeuristic]]
 
 
 @pytest.fixture
-def test_all_cases(all_cases):
-    testObj = getAlgorithm(g)
-    for case in all_cases:
+def no_path(no_end_or_origin, no_end, no_origin):
+    return [no_end_or_origin, no_end, no_origin]
+
+
+@pytest.fixture
+def singleton(same_node):
+    return [same_node]
+
+
+@pytest.fixture
+def two_path(two_nodes1, two_nodes2):
+    return [two_nodes1, two_nodes2]
+
+
+@pytest.fixture
+def many_path(many_nodes1, many_nodes2):
+    return [many_nodes1, many_nodes2]
+
+
+def test_all_cases(no_path,
+                singleton,
+                two_path,
+                many_path,
+                getAlgorithm):
+
+    testObj = getAlgorithm
+    for case in no_path:
         testObj.generatePath(*case)
-        assert testObj.generatePath != []
+        assert testObj.givePath() == None
+    
+    for case in singleton:
+        testObj.generatePath(*case)
+        assert len(testObj.givePath()) == 1
+
+    for case in two_path:
+        testObj.generatePath(*case)
+        assert len(testObj.givePath()) == 2
+
+    for case in many_path:
+        testObj.generatePath(*case)
+        assert len(testObj.givePath()) > 2
